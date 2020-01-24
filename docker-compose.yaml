@@ -1,0 +1,44 @@
+version: '2.2'
+services:
+  kafka-cluster:
+    container_name: kafka-cluster
+    image: landoop/fast-data-dev:latest
+    environment:
+      ADV_HOST: 127.0.0.1         # Change to 192.168.99.100 if using Docker Toolbox
+      RUNTESTS: 0                 # Disable Running tests so the cluster starts faster
+      CONNECTORS: debezium-mysql,jdbc
+      SAMPLEDATA: 0
+    ports:
+      - 2181:2181                   # Zookeeper
+      - 3030:3030                   # Landoop UI
+      - 8081-8083:8081-8083         # REST Proxy, Schema Registry, Kafka Connect ports
+      - 9581-9585:9581-9585         # JMX Ports
+      - 9092:9092                   # Kafka Broker
+    volumes:
+      - ./target/plugin/:/connectors/
+    # it possible to configure external hosts eg
+    #extra_hosts:
+    #- "dev-elastic-freight-orders0.km.rst.com.pl:192.168.11.179"
+    links:
+      - mysql
+      - postgres
+  mysql:
+    build:
+      context: src_mysql
+    ports:
+     - 3305:3306
+    environment:
+     - MYSQL_ROOT_PASSWORD=admin123
+     - MYSQL_USER=mysqluser
+     - MYSQL_PASSWORD=mysqlpw
+  postgres:
+    build:
+      context: dest_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=postgrespw
+      - POSTGRES_DB=inventory
+      - DB_HOST=docker.for.mac.host.internal
+
